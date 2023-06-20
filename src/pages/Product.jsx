@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { Annoucement, Navbar } from "../components";
 import Newsletter from "../components/Newsletter";
 import Footer from "../components/Footer";
 import { Add, Remove } from "@mui/icons-material";
 import { mobile } from "../responsive";
+import { useParams } from "react-router-dom";
+import { publicRequest } from "../requestMethods";
 
 const Container = styled.div``;
 
@@ -101,47 +103,77 @@ const Button = styled.button`
 `;
 
 const Product = () => {
+  const { id } = useParams();
+  const [color, setColor] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [size, setSize] = useState("");
+  const [product, setProduct] = useState({});
+
+  const handleQuantity = (val) => {
+    if (val === "dec") {
+      quantity > 1 && setQuantity(quantity - 1);
+    } else {
+      setQuantity(quantity + 1);
+    }
+  };
+
+  useEffect(() => {
+    const getProduct = async () => {
+      try {
+        const res = await publicRequest.get(`products/find/${id}`);
+        setProduct(res.data);
+      } catch (error) {}
+    };
+    getProduct();
+  }, [id]);
+
+  const handleClick = () => {};
+
   return (
     <Container>
       <Navbar />
       <Annoucement />
       <Wrapper>
         <ImgContainer>
-          <Image src="https://hips.hearstapps.com/vader-prod.s3.amazonaws.com/1614188818-TD1MTHU_SHOE_ANGLE_GLOBAL_MENS_TREE_DASHERS_THUNDER_b01b1013-cd8d-48e7-bed9-52db26515dc4.png?crop=1xw:1.00xh;center,top&resize=480%3A%2A" />
+          <Image src={product.img} />
         </ImgContainer>
         <InfoContainer>
-          <Title>Denim Jumpsuit</Title>
-          <Desc>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Explicabo
-            delectus deleniti in, ea eveniet illo facilis itaque nemo laborum,
-            temporibus ex eligendi officia officiis quae quaerat recusandae.
-            Placeat, repellendus ducimus.
-          </Desc>
-          <Price>$20</Price>
+          <Title>{product.title}</Title>
+          <Desc>{product.desc}</Desc>
+          <Price>${product.price}</Price>
           <FilterContainer>
             <Filter>
               <FilterTitle>Color</FilterTitle>
-              <FilterColor color="black" />
-              <FilterColor color="darkblue" />
-              <FilterColor color="gray" />
+              {product.color?.map((item, id) => (
+                <FilterColor
+                  color={item}
+                  key={id}
+                  onClick={() => setColor(item)}
+                />
+              ))}
             </Filter>
             <Filter>
               <FilterTitle>Size</FilterTitle>
-              <FilterSize>
-                <FilterSizeoption>XS</FilterSizeoption>
-                <FilterSizeoption>S</FilterSizeoption>
-                <FilterSizeoption>M</FilterSizeoption>
-                <FilterSizeoption>L</FilterSizeoption>
-                <FilterSizeoption>XL</FilterSizeoption>
-                <FilterSizeoption>XXL</FilterSizeoption>
+              <FilterSize onChange={(e) => setSize(e.target.value)}>
+                {product.size?.map((item, id) => (
+                  <FilterSizeoption key={id}>{item}</FilterSizeoption>
+                ))}
               </FilterSize>
             </Filter>
           </FilterContainer>
           <AddContainer>
             <AmountContainer>
-              <Remove />
-              <Amount>1</Amount>
-              <Add />
+              <Remove
+                onClick={() => {
+                  handleQuantity("dec");
+                }}
+              />
+              <Amount>{quantity}</Amount>
+              <Add
+                onClick={() => {
+                  handleQuantity("inc");
+                }}
+              />
             </AmountContainer>
             <Button>Add to Cart</Button>
           </AddContainer>
